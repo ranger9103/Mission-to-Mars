@@ -1,9 +1,11 @@
 # Import Splinter, BeautifulSoup, and Pandas
 from splinter import Browser
-from bs4 import BeautifulSoup as soup
+from bs4 import BeautifulSoup as bs
 import pandas as pd
 import datetime as dt
 from webdriver_manager.chrome import ChromeDriverManager
+import time
+
 
 
 def scrape_all():
@@ -19,7 +21,8 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "last_modified": dt.datetime.now(),
+        "hemispheres": hemisphere_image_urls
     }
 
     # Stop webdriver and return data
@@ -39,7 +42,7 @@ def mars_news(browser):
 
     # Convert the browser html to a soup object and then quit the browser
     html = browser.html
-    news_soup = soup(html, 'html.parser')
+    news_soup = bs(html, 'html.parser')
 
     # Add try/except for error handling
     try:
@@ -66,7 +69,7 @@ def featured_image(browser):
 
     # Parse the resulting html with soup
     html = browser.html
-    img_soup = soup(html, 'html.parser')
+    img_soup = bs(html, 'html.parser')
 
     # Add try/except for error handling
     try:
@@ -82,6 +85,8 @@ def featured_image(browser):
     return img_url
 
 def mars_facts():
+
+
     # Add try/except for error handling
     try:
         # Use 'read_html' to scrape the facts table into a dataframe
@@ -96,6 +101,32 @@ def mars_facts():
 
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
+
+url = 'https://marshemispheres.com/'
+Browser.visit(url)
+
+html = Browser.html
+soup = bs(html, 'html.parser')  
+    
+
+items = bs.find("div", {"class":"results"}).find_all("div", {"class","item"})
+hemisphere_image_urls = []
+
+for item in items:
+
+    link=item.find("a", {"class":"itemLink"})["href"]
+    full_url=url + link
+ 
+    
+    time.sleep(1)
+    
+    img = soup.find("img", {"class", "wide-image"})["src"]
+    img_url = url + img
+    
+    title = soup.find("h2", {"class":"title"}).text.split("Enhanced")[0].strip()
+    
+    data = {"img_url" : img_url, "title":title}
+    hemisphere_image_urls.append(data)
 
 if __name__ == "__main__":
 
